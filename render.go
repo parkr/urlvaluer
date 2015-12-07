@@ -47,6 +47,18 @@ type GeneratedType struct {
 	IsUrlValuer bool
 }
 
+type GeneratedTypes []GeneratedType
+
+func (slice GeneratedTypes) Len() int {
+	return len(slice)
+}
+func (slice GeneratedTypes) Less(i, j int) bool {
+	return slice[i].Struct.Name < slice[j].Struct.Name
+}
+func (slice GeneratedTypes) Swap(i, j int) {
+	slice[i], slice[j] = slice[j], slice[i]
+}
+
 func getRenderedPath(inputPath string) (string, error) {
 	if !strings.HasSuffix(inputPath, ".go") {
 		return "", fmt.Errorf("Input path %s doesn't have .go extension", inputPath)
@@ -58,9 +70,9 @@ func getRenderedPath(inputPath string) (string, error) {
 
 type generateTemplateData struct {
 	Package string
-	Types   []GeneratedType
+	Types   GeneratedTypes
 }
 
-func render(w io.Writer, packageName string, types []GeneratedType) error {
+func render(w io.Writer, packageName string, types GeneratedTypes) error {
 	return generatedTemplate.Execute(w, generateTemplateData{packageName, types})
 }

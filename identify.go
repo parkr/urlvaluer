@@ -20,11 +20,12 @@ import (
 	"go/token"
 	"log"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 )
 
-func loadFile(inputPath string) (string, []GeneratedType) {
+func loadFile(inputPath string) (string, GeneratedTypes) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, inputPath, nil, parser.ParseComments)
 	if err != nil {
@@ -52,12 +53,14 @@ func loadFile(inputPath string) (string, []GeneratedType) {
 		}
 	}
 
-	types := []GeneratedType{}
+	types := GeneratedTypes{}
 	for typeName, typeSpec := range valuertypes {
 		_, isUrlValuer := valuers[typeName]
 		urlvaluer := GeneratedType{*typeSpec, isUrlValuer}
 		types = append(types, urlvaluer)
 	}
+
+	sort.Stable(types)
 
 	return packageName, types
 }
