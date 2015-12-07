@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"go/ast"
 	"log"
+	"unicode"
+	"unicode/utf8"
 )
 
 type StructSpec struct {
@@ -38,19 +40,27 @@ func NewFieldSpec(name, snakeCase string, astType ast.Expr) fieldSpec {
 }
 
 func resolveType(astType ast.Expr) (resolvedType string, isPointer bool) {
-	var fieldType ast.Expr
-	fieldType = astType
-	if starExpr, ok := fieldType.(*ast.StarExpr); ok {
-		fieldType = starExpr.X
+	switch field := astType.(type) {
+	case *ast.StarExpr:
 		isPointer = true
-	}
-	switch field := fieldType.(type) {
+		resolvedType, _ = resolveType(field.X)
 	case *ast.Ident:
-		resolvedType = field.String()
+		if field.Obj != nil {
+			if typeSpec, ok := field.Obj.Decl.(*ast.TypeSpec); ok {
+				resolvedType, _ = resolveType(typeSpec.Type)
+				log.Printf("resolved to %s", resolvedType)
+			}
+		} else {
+			resolvedType = field.String()
+		}
 	case *ast.ArrayType:
 		resolvedType = "array"
+	case *ast.SelectorExpr:
+		resolvedType, _ = resolveType(field.Sel)
+	case *ast.StructType:
+		resolvedType = "Struct"
 	default:
-		resolvedType = fmt.Sprintf("%T", fieldType)
+		resolvedType = fmt.Sprintf("%T", astType)
 	}
 	return
 }
@@ -62,10 +72,18 @@ func (f *fieldSpec) withType(astType ast.Expr) *fieldSpec {
 
 func (f fieldSpec) Accessor(owner string) string {
 	if f.isPointer {
+		if f.IsStruct() {
+			return fmt.Sprintf(`%s.%s.UrlValues("%s")`, owner, f.Name, f.SnakeCaseName)
+		}
 		return fmt.Sprintf("*%s.%s", owner, f.Name)
 	} else {
 		return fmt.Sprintf("%s.%s", owner, f.Name)
 	}
+}
+
+func (f fieldSpec) IsStruct() bool {
+	r, _ := utf8.DecodeRuneInString(f.resolvedType[0:1])
+	return unicode.IsUpper(r)
 }
 
 func (f fieldSpec) Zero() string {

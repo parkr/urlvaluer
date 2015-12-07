@@ -31,10 +31,24 @@ import (
 	"net/url"
 )
 {{range .Types}}{{if not .IsUrlValuer}}
-func (t {{.Struct.Name}}) UrlValues() url.Values {
+func (t {{.Struct.Name}}) UrlValues(parent string) url.Values {
 	vals := url.Values{}
+
 	{{range .Struct.Fields}}{{if .HasLen}}if len({{.Accessor "t"}}) > 0{{else}}
-	if t.{{.Name}} != {{.Zero}}{{end}} { vals.Set("{{.SnakeCaseName}}", fmt.Sprint({{.Accessor "t"}})) }
+	if t.{{.Name}} != {{.Zero}}{{end}} {
+    {{if .IsStruct}}
+        for k, vs := range {{.Accessor "t"}} {
+            for _, v := range vs {
+                vals.Set(k, v)
+            }
+        }
+    {{else}}
+        if parent != "" {
+            vals.Set(fmt.Sprintf("%s[%s]", parent, "{{.SnakeCaseName}}"), fmt.Sprint({{.Accessor "t"}}))
+        } else {
+            vals.Set("{{.SnakeCaseName}}", fmt.Sprint({{.Accessor "t"}}))
+        }
+    {{end}} }
 	{{end}}
 	return vals
 }
