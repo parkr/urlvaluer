@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"go/ast"
 	"log"
-	"strings"
 )
 
 type StructSpec struct {
@@ -38,18 +37,26 @@ func NewFieldSpec(name, snakeCase string, astType ast.Expr) fieldSpec {
 	return *spec.withType(astType)
 }
 
-func (f *fieldSpec) withType(astType ast.Expr) *fieldSpec {
+func resolveType(astType ast.Expr) (resolvedType string, isPointer bool) {
 	var fieldType ast.Expr
 	fieldType = astType
 	if starExpr, ok := fieldType.(*ast.StarExpr); ok {
 		fieldType = starExpr.X
-		f.isPointer = true
+		isPointer = true
 	}
-	if ident, ok := fieldType.(*ast.Ident); ok {
-		f.resolvedType = ident.String()
-	} else {
-		f.resolvedType = fmt.Sprintf("%T", fieldType)
+	switch field := fieldType.(type) {
+	case *ast.Ident:
+		resolvedType = field.String()
+	case *ast.ArrayType:
+		resolvedType = "array"
+	default:
+		resolvedType = fmt.Sprintf("%T", fieldType)
 	}
+	return
+}
+
+func (f *fieldSpec) withType(astType ast.Expr) *fieldSpec {
+	f.resolvedType, f.isPointer = resolveType(astType)
 	return f
 }
 
@@ -79,18 +86,6 @@ func (f fieldSpec) Zero() string {
 	}
 }
 
-func (f fieldSpec) IsString() bool {
-	return f.resolvedType == "string"
-}
-
-func (f fieldSpec) IsInt() bool {
-	return strings.HasPrefix(f.resolvedType, "int")
-}
-
-func (f fieldSpec) IsFloat() bool {
-	return strings.HasPrefix(f.resolvedType, "float")
-}
-
-func (f fieldSpec) IsStruct() bool {
-	return !(f.IsString() || f.IsInt() || f.IsFloat())
+func (f fieldSpec) HasLen() bool {
+	return f.resolvedType == "array"
 }
