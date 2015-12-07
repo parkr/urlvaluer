@@ -36,7 +36,7 @@ func (t {{.Struct.Name}}) UrlValues() url.Values {
 	{{range .Struct.Fields}}{{if .HasLen}}if len({{.Accessor "t"}}) > 0{{else}}
 	if t.{{.Name}} != {{.Zero}}{{end}} { vals.Set("{{.SnakeCaseName}}", fmt.Sprint({{.Accessor "t"}})) }
 	{{end}}
-	return url.Values{}
+	return vals
 }
 {{end}}
 {{end}}`))
