@@ -15,7 +15,6 @@
 package main
 
 import (
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -24,56 +23,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-type StructSpec struct {
-	Name   string
-	Fields []FieldSpec
-}
-
-type FieldSpec struct {
-	Name          string
-	SnakeCaseName string
-	Type          ast.Expr
-	resolvedType  string
-}
-
-func (f FieldSpec) asString() string {
-	if f.resolvedType != "" {
-		return f.resolvedType
-	}
-
-	var fieldType ast.Expr
-	fieldType = f.Type
-	if starExpr, ok := fieldType.(*ast.StarExpr); ok {
-		fieldType = starExpr.X
-	}
-	log.Printf("%T", fieldType)
-	if ident, ok := fieldType.(*ast.Ident); ok {
-		f.resolvedType = ident.String()
-	} else {
-		f.resolvedType = fmt.Sprintf("%T", fieldType)
-	}
-
-	log.Printf("resolved %#v to %s", f.Name, f.resolvedType)
-
-	return f.resolvedType
-}
-
-func (f FieldSpec) IsString() bool {
-	return f.asString() == "string"
-}
-
-func (f FieldSpec) IsInt() bool {
-	return strings.HasPrefix(f.asString(), "int")
-}
-
-func (f FieldSpec) IsFloat() bool {
-	return strings.HasPrefix(f.asString(), "float")
-}
-
-func (f FieldSpec) IsStruct() bool {
-	return !(f.IsString() || f.IsInt() || f.IsFloat())
-}
 
 func loadFile(inputPath string) (string, []GeneratedType) {
 	fset := token.NewFileSet()
@@ -141,7 +90,7 @@ func identifyUrlValuerType(decl ast.Decl) (structSpec *StructSpec, match bool) {
 			}
 		}
 	}
-	if structSpec.Name == "" {
+	if structSpec.Name == "" || len(structSpec.Fields) == 0 {
 		return
 	}
 
@@ -212,8 +161,8 @@ func identifyUrlValuer(decl ast.Decl) (typeName string, match bool) {
 	return
 }
 
-func getFieldData(fieldsList []*ast.Field) []FieldSpec {
-	fields := []FieldSpec{}
+func getFieldData(fieldsList []*ast.Field) []fieldSpec {
+	fields := []fieldSpec{}
 	for _, field := range fieldsList {
 		if !field.Names[0].IsExported() || field.Names[0].Name == "XXX_unrecognized" {
 			continue
@@ -226,11 +175,11 @@ func getFieldData(fieldsList []*ast.Field) []FieldSpec {
 			snakeCaseName = strings.SplitN(st.Get("json"), ",", 2)[0]
 		}
 
-		fields = append(fields, FieldSpec{
-			Name:          field.Names[0].Name,
-			SnakeCaseName: snakeCaseName,
-			Type:          field.Type,
-		})
+		fields = append(fields, NewFieldSpec(
+			field.Names[0].Name,
+			snakeCaseName,
+			field.Type,
+		))
 	}
 	return fields
 }

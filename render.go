@@ -33,7 +33,7 @@ import (
 {{range .Types}}{{if not .IsUrlValuer}}
 func (t {{.Struct.Name}}) UrlValues() url.Values {
 	vals := url.Values{}
-	{{range .Struct.Fields}}if t.{{.Name}} != nil { vals.Set("{{.SnakeCaseName}}", fmt.Sprint(t.Get{{.Name}}())) }
+	{{range .Struct.Fields}}if t.{{.Name}} != {{.Zero}} { vals.Set("{{.SnakeCaseName}}", fmt.Sprintf({{.Accessor "t"}})) }
 	{{end}}
 	return url.Values{}
 }
