@@ -65,7 +65,7 @@ func getRenderedPath(inputPath string) (string, error) {
 	}
 	trimmed := strings.TrimSuffix(inputPath, ".go")
 	dir, file := filepath.Split(trimmed)
-	return filepath.Join(dir, fmt.Sprintf("%s_urlvaluer.go", file)), nil
+	return filepath.Join(dir, fmt.Sprintf("%s.urlvaluer.go", file)), nil
 }
 
 type generateTemplateData struct {

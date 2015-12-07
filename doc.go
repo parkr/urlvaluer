@@ -6,7 +6,7 @@
 //     //go:generate urlvaluer $GOFILE
 //
 // Next time you run "go generate" for these files, it will generate a file
-// with the suffix "_urlvaluer.go" in that same directory which contains
+// with the suffix ".urlvaluer.go" in that same directory which contains
 // the relevant code to generate url.Values from your structs.
 //
 // LICENSE:
