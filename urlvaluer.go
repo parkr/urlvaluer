@@ -15,6 +15,8 @@
 package main
 
 import (
+	"bytes"
+	"flag"
 	"log"
 	"os"
 )
@@ -43,6 +45,14 @@ func processFile(inputPath string) {
 }
 
 func main() {
+	debug := flag.Bool("-v", false, "Whether to run in verbose mode or not")
+	flag.Parse()
+	if *debug {
+		log.SetOutput(os.Stdout)
+	} else {
+		log.SetOutput(&bytes.Buffer{})
+	}
+
 	log.SetFlags(0)
 	log.SetPrefix("urlvaluer: ")
 
