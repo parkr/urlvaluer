@@ -31,7 +31,7 @@ func processFile(inputPath string) {
 		log.Fatalf("Could not get output path: %s", err)
 	}
 
-	output, err := os.OpenFile(outputPath, os.O_WRONLY|os.O_CREATE, 0600)
+	output, err := os.OpenFile(outputPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		log.Fatalf("Could not open output file: %s", err)
 	}
