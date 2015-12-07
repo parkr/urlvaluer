@@ -45,7 +45,7 @@ func processFile(inputPath string) {
 }
 
 func main() {
-	debug := flag.Bool("-v", false, "Whether to run in verbose mode or not")
+	debug := flag.Bool("v", false, "Whether to run in verbose mode or not")
 	flag.Parse()
 	if *debug {
 		log.SetOutput(os.Stdout)
@@ -56,7 +56,7 @@ func main() {
 	log.SetFlags(0)
 	log.SetPrefix("urlvaluer: ")
 
-	for _, path := range os.Args[1:] {
+	for _, path := range flag.Args() {
 		processFile(path)
 	}
 }
